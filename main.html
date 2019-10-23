@@ -1,0 +1,698 @@
+<!-- John Linnane 118227214 -->
+
+<html>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+
+<head>
+	<title>Quadrophenia</title>
+
+	<style>
+		body { 
+			margin: 0; 
+		}
+		
+		canvas { 
+			width: 100%; 
+			height: 100% 
+		}
+
+		#container {
+			position: relative;
+		}
+		
+		#container canvas, #overlay {
+			position: absolute;
+		}
+		
+		canvas {
+			border: 1px solid black;
+			position: absolute;
+		}
+		
+		#overlay {
+			position: fixed; 
+			bottom:0%;
+			opacity: 0.8;
+			padding: 30px;
+		}		
+	</style>
+
+</head>
+
+
+
+<body>
+	
+	
+		<script src="scripts/LibThreeJS/three.js"></script>
+		<script src="scripts/LibThreeJS/OrbitControls.js"></script>
+		<script src="scripts/LibThreeJS/ObjectLoader.js"></script>
+		<script src="scripts/LibThreeJS/ColladaLoader.js"></script>
+<!--<script src="scripts/LibThreeJS/GLTFLoader.js"></script> -->
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
+
+		<script src="scripts/js/WebVR.js"></script> <!-- from the internet -->
+		<script src="scripts/js/OBJLoader.js"></script> <!-- from labs -->
+		<script src="scripts/js/dat.gui.min.js"></script>
+		<script src="scripts/js/stats.min.js"></script> <!-- from the internet -->
+		<script src="scripts/js/WebGL.js"></script>
+
+
+<!-- ************************* ADD SHADER SCRIPTS ******************************** -->
+
+
+		<script id="fragmentshader4" type="x-shader/x-fragment">
+			uniform float time;
+			varying vec2 vUv;
+			void main( void ) {
+				vec2 position = - 1.0 + 2.0 * vUv;
+				float red = abs( sin( position.x * position.y + time / 5.0 ) );
+				float green = abs( sin( position.x * position.y + time / 4.0 ) );
+				float blue = abs( sin( position.x * position.y + time / 3.0 ) );
+				gl_FragColor = vec4( red, green, blue, 1.0 );
+			}
+		</script>
+
+		<script id="fragmentshader3" type="x-shader/x-fragment">
+			uniform float time;
+			varying vec2 vUv;
+			void main( void ) {
+				vec2 position = vUv;
+				float color = 0.0;
+				color += sin( position.x * cos( time / 15.0 ) * 80.0 ) + cos( position.y * cos( time / 15.0 ) * 10.0 );
+				color += sin( position.y * sin( time / 10.0 ) * 40.0 ) + cos( position.x * sin( time / 25.0 ) * 40.0 );
+				color += sin( position.x * sin( time / 5.0 ) * 10.0 ) + sin( position.y * sin( time / 35.0 ) * 80.0 );
+				color *= sin( time / 10.0 ) * 0.5;
+				gl_FragColor = vec4( vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 ), 1.0 );
+			}
+		</script>
+
+		<script id="fragmentshader2" type="x-shader/x-fragment">
+			uniform float time;
+			uniform sampler2D texture;
+			varying vec2 vUv;
+			void main( void ) {
+				vec2 position = - 1.0 + 2.0 * vUv;
+				float a = atan( position.y, position.x );
+				float r = sqrt( dot( position, position ) );
+				vec2 uv;
+				uv.x = cos( a ) / r;
+				uv.y = sin( a ) / r;
+				uv /= 10.0;
+				uv += time * 0.05;
+				vec3 color = texture2D( texture, uv ).rgb;
+				gl_FragColor = vec4( color * r * 1.5, 1.0 );
+			}
+		</script>
+
+		<script id="fragmentshader1" type="x-shader/x-fragment">
+			uniform float time;
+			varying vec2 vUv;
+			void main(void) {
+				vec2 p = - 1.0 + 2.0 * vUv;
+				float a = time * 40.0;
+				float d, e, f, g = 1.0 / 40.0 ,h ,i ,r ,q;
+				e = 400.0 * ( p.x * 0.5 + 0.5 );
+				f = 400.0 * ( p.y * 0.5 + 0.5 );
+				i = 200.0 + sin( e * g + a / 150.0 ) * 20.0;
+				d = 200.0 + cos( f * g / 2.0 ) * 18.0 + cos( e * g ) * 7.0;
+				r = sqrt( pow( abs( i - e ), 2.0 ) + pow( abs( d - f ), 2.0 ) );
+				q = f / r;
+				e = ( r * cos( q ) ) - a / 2.0;
+				f = ( r * sin( q ) ) - a / 2.0;
+				d = sin( e * g ) * 176.0 + sin( e * g ) * 164.0 + r;
+				h = ( ( f + d ) + a / 2.0 ) * g;
+				i = cos( h + r * p.x / 1.3 ) * ( e + e + a ) + cos( q * g * 6.0 ) * ( r + h / 3.0 );
+				h = sin( f * g ) * 144.0 - sin( e * g ) * 212.0 * p.x;
+				h = ( h + ( f - e ) * q + sin( r - ( a + h ) / 7.0 ) * 10.0 + i / 4.0 ) * g;
+				i += cos( h * 2.3 * sin( a / 350.0 - q ) ) * 184.0 * sin( q - ( r * 4.3 + a / 12.0 ) * g ) + tan( r * g + h ) * 184.0 * cos( r * g + h );
+				i = mod( i / 5.6, 256.0 ) / 64.0;
+				if ( i < 0.0 ) i += 4.0;
+				if ( i >= 2.0 ) i = 4.0 - i;
+				d = r / 350.0;
+				d += sin( d * d * 8.0 ) * 0.52;
+				f = ( sin( a * g ) + 1.0 ) / 2.0;
+				gl_FragColor = vec4( vec3( f * i / 1.6, i / 2.0 + d / 13.0, i ) * d * p.x + vec3( i / 1.3 + d / 8.0, i / 2.0 + d / 18.0, i ) * d * ( 1.0 - p.x ), 1.0 );
+			}
+		</script>
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			void main()
+			{
+				vUv = uv;
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+				gl_Position = projectionMatrix * mvPosition;
+			}
+		</script>
+
+<script>
+
+
+//************************* SET UP SCENE ************************************
+
+// create new scene
+var scene = new THREE.Scene();
+scene.background = new THREE.Color( 0xcc0000 );
+scene.fog = new THREE.Fog( 0xE8E812, 200, 1000 );
+	
+var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+// use WebGL renderer, with antialiasing to reduce jagged lines
+renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setPixelRatio( window.devicePixelRatio );
+// render to full window
+renderer.setSize( window.innerWidth, window.innerHeight );
+
+// **********************************************************************************
+// **********   UNCOMMENT THE FOLLOWING LINE TO ENABLE HEADSET CAPABILITY ***********
+// **********************************************************************************
+
+// renderer.vr.enabled = true;
+
+document.body.appendChild( renderer.domElement );
+
+
+
+//************************* ADD SOME LIGHTS ************************************
+
+
+
+// light to follow scooter
+var scootLight = new THREE.DirectionalLight( 0x909090, 1, 200);
+scootLight.position.set( 120, 20, -180); 		
+scootLight.castShadow = true;   
+scootLight.penumbra = 0.3;
+scootLight.intensity = 2;
+scootLight.angle = 0.6;
+scootLight.target.position.set( 120, 20, -180); 		
+
+scene.add( scootLight );
+scene.add( scootLight.target )
+
+
+
+// controllable light
+var light1 = new THREE.SpotLight( 0xFF9999, 1, 200);
+light1.position.set( -35 ,10, 30 ); 										
+light1.castShadow = true;          							
+light1.intensity = 2;
+light1.visible = true; 
+light1.penumbra = 0.3;
+light1.intensity = 0.2;
+light1.angle = 0.6;
+		
+scene.add( light1 );
+
+
+// add an ambient light
+var lightAmbient = new THREE.AmbientLight( 0x737171 );			  
+scene.add( lightAmbient );
+
+
+
+//************************* ADD MOVABLE LIGHT **********************************
+
+
+
+var lightMove = new THREE.SpotLight( 0xFF7777, 1, 200);
+var increment = 0;
+lightMove.castShadow = true;  
+lightMove.intensity = 2;
+lightMove.visible = true; 
+lightMove.penumbra = 0.3;
+lightMove.intensity = 2;
+lightMove.angle = 0.9;
+lightMove.position.set( 35, 10, 35 ); 										
+lightMove.target.position.set(35, 0, 35);
+scene.add( lightMove.target );
+scene.add( lightMove );
+
+
+
+//************************* ADD USER CONTROLABLE LIGHT **********************************
+
+	
+var gui;
+var datGui = new dat.GUI();
+
+// set default values for graphical user interface
+gui = {
+	Brightness : 2,
+	Toggle: true,
+	Position: 0
+};
+
+// set the ranges of intensity, visibility and x-axis position
+datGui.add(gui,"Brightness",0,2);
+datGui.add(gui,"Toggle",false, true);
+datGui.add(gui,"Position", 0,100);
+
+// create spotlight with red colour
+var lightGUI = new THREE.SpotLight( 0xFF9999, 1, 200);
+// position light above spinning motorbike
+lightGUI.position.set( 0,10, 0 ); 										
+lightGUI.castShadow = true;  
+lightGUI.intensity = 2;
+lightGUI.visible = true; 
+// reduce hard edges to light slightly
+lightGUI.penumbra = 0.3;
+// set brightness to maximum
+lightGUI.intensity = 2;
+lightGUI.angle = 0.6;
+scene.add( lightGUI );
+
+	
+	
+//************************* MAKE THE GROUND ************************************
+
+
+	
+// create ground plane
+var groundPlane = new THREE.PlaneGeometry(500, 500, 8);
+groundPlane.rotateX( Math.PI / 2 );
+
+// add ground texture image
+var groundTexture = new THREE.TextureLoader().load( "textures/ground.png" );
+groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
+groundTexture.repeat.set( 100, 100 );
+
+// add normal map image for the illusion of depth
+var groundNormalMap = new THREE.TextureLoader().load( "textures/groundNormal.png" );
+groundNormalMap.wrapS = groundNormalMap.wrapT = THREE.RepeatWrapping;
+groundNormalMap.repeat.set( 100, 100 );
+
+// create the material out of the image and the normal image
+var groundPlaneMaterial = new THREE.MeshPhongMaterial({ map: groundTexture, normalMap: groundNormalMap, shininess: 8, side: THREE.BackSide});
+// add the material to the plane
+var quadGround = new THREE.Mesh(groundPlane, groundPlaneMaterial);
+// allow ground to receive shadows
+quadGround.receiveShadow = true;
+scene.add(quadGround);
+
+
+
+//************************* ADD THE QUAD ************************************
+
+
+
+var loader = new THREE.ColladaLoader();
+
+// define a mesh
+var mesh;															
+
+// load quad dae file
+loader.load("assets/models/quad.dae", function (result) {	
+	// load the files children
+	mesh = result.scene.children[0].clone();		
+	// rotate the model				
+	mesh.rotation.x = -0.5 * Math.PI;						
+	// reduce size of model
+	mesh.scale.set(0.03, 0.03, 0.03);								
+
+	scene.add(mesh);
+});
+
+
+
+//************************* ADD A MOVING MOTORBIKE ************************************
+
+
+
+var bikeLoader = new THREE.GLTFLoader();
+
+bikeLoader.load
+(
+	'assets/motoalone.glb',
+	
+	function (object)
+	{
+		bikeLoader = object.scene;
+
+		scene.add(bikeLoader);
+		bikeLoader.position.set(205, -2, 200);
+		// rotate so bike is facing in the right direction while moving
+		bikeLoader.rotation.y = (Math.PI / 2) / -2;
+	}
+);
+
+
+
+//************************* ADD A CIRCLING MOTORBIKE ************************************
+
+
+
+var bikeLoader2 = new THREE.GLTFLoader();
+
+bikeLoader2.load
+(
+	'assets/motoalone.glb',
+	
+	function (object)
+	{
+		bikeLoader2 = object.scene;
+
+		scene.add(bikeLoader2);
+		bikeLoader2.position.set(0, 1, 0);
+		// rotate to starting position in radians
+		bikeLoader2.rotation.z = (Math.PI / 2) / -2;
+	}
+);
+
+
+//************************* ADD A MOVING SCOOTER ************************************
+
+
+
+var scootLoader = new THREE.GLTFLoader();
+
+scootLoader.load
+(
+	'assets/scooter.glb',
+	
+	function (object)
+	{
+		scootLoader = object.scene;
+
+		scene.add(scootLoader);
+		scootLoader.position.set(120, 17, -180);
+		scootLoader.scale.set( 0.1, 0.1, 0.1 );
+		scootLoader.rotation.x = (Math.PI / 2) / -1.6;
+
+
+	}
+);
+
+
+//************************* EYEBALL IN THE SKY ************************************
+
+
+// create phong reflectance material
+var material = new THREE.MeshPhongMaterial( {
+  specular: 0x222222,
+  shininess: 35
+} );
+
+var loader = new THREE.OBJLoader();
+
+loader.load(
+	'assets/eyeball.obj',
+	function ( object ) {
+			object.traverse( function ( child ) {
+				if ( child instanceof THREE.Mesh ) {
+						child.material = material;
+						child.position.y -= 10;
+				}
+			} );
+	scene.add( object );
+	object.position.set(100, 525, 100);
+	object.scale.set( 30, 30, 30 );
+	},
+);
+
+
+//************************* MAKE VIDEO BILLBOARD ************************************
+
+var video = document.createElement( 'video' );
+		// make video loop
+    video.loop = true;
+    video.crossOrigin = 'anonymous';
+    video.preload = 'auto';
+    // load video
+    video.src = "video/QuadRed.mp4";
+    video.play();
+
+var texture = new THREE.VideoTexture( video );
+    texture.minFilter = THREE.NearestFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.format = THREE.RGBFormat;
+
+// create a billboard to show the film
+var geometry = new THREE.BoxGeometry( 300, 300, 1 );
+
+var material   = new THREE.MeshBasicMaterial( { map : texture } );
+var billboard = new THREE.Mesh( geometry, material );
+scene.add( billboard );
+billboard.position.set(-15, 150, -60); // L-R, height, depth
+billboard.rotation.y = (Math.PI / 2) / 3.5;
+
+
+//************************* ADD A TEXTURED CUBE ************************************
+
+
+var cubeloader = new THREE.TextureLoader();
+var cubegeometry = new THREE.BoxGeometry( 25, 25, 25 );
+var cubematerial = new THREE.MeshBasicMaterial({map: cubeloader.load('textures/whoa.gif')});
+var cube = new THREE.Mesh(cubegeometry, cubematerial);
+cube.castShadow = true;
+
+scene.add( cube );
+cube.position.set(-70, 20, 60);
+
+
+//************************* ADD SHADER BOLLARD 1 ************************************
+
+	
+
+// create a shader material
+var shaderMat1 = new THREE.ShaderMaterial({      
+	uniforms: {
+					time: { value:1.0 },
+					resolution: { value: new THREE.Vector2() }
+	},
+
+	// grab shader scripts
+	vertexShader: document.getElementById("vertexShader").textContent,
+	fragmentShader: document.getElementById("fragmentshader1").textContent
+});
+
+// create a cylinder geometry
+var shaderGeo1 = new THREE.CylinderGeometry( 2, 2, 7, 32 );
+// add the shader to the geometry
+var shaderCyl1 = new THREE.Mesh( shaderGeo1, shaderMat1);
+scene.add( shaderCyl1 );                          
+shaderCyl1.position.set(0, 4, 25);
+
+
+
+//************************* ADD SHADER BOLLARD 2 ************************************
+
+	
+	
+var shaderMat2 = new THREE.ShaderMaterial({     
+	uniforms: {
+					time: { value:1.0 },
+					resolution: { value: new THREE.Vector2() }
+	},
+
+	vertexShader: document.getElementById("vertexShader").textContent,
+	fragmentShader: document.getElementById("fragmentshader2").textContent
+});
+
+var shaderGeo2 = new THREE.CylinderGeometry( 2, 2, 7, 32 );
+var shaderCyl2 = new THREE.Mesh( shaderGeo2, shaderMat2);
+scene.add( shaderCyl2 );                          
+shaderCyl2.position.set(15, 4, 20);
+
+
+
+//************************* ADD SHADER BOLLARD 3 ************************************
+
+	
+
+
+var shaderMat3 = new THREE.ShaderMaterial({     
+	uniforms: {
+					time: { value:1.0 },
+					resolution: { value: new THREE.Vector2() }
+	},
+
+	vertexShader: document.getElementById("vertexShader").textContent,
+	fragmentShader: document.getElementById("fragmentshader3").textContent
+});
+
+var shaderGeo3 = new THREE.CylinderGeometry( 2, 2, 7, 32 );
+var shaderCyl3 = new THREE.Mesh( shaderGeo3, shaderMat3);
+scene.add( shaderCyl3 );                           
+shaderCyl3.position.set(35, 4, 15);
+
+
+
+//************************* ADD SKY ENVIRONMENT ************************************
+ 
+
+
+// encase the scene in a large box
+var skyGeometry = new THREE.CubeGeometry( 1200, 1200, 1200 );
+
+// add image file to each side of the box
+var skyCubeMaterials = [
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load( "textures/cloudsRed.png" ), side: THREE.DoubleSide, fog: false  }), 	//front side
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load( "textures/cloudsRed.png" ), side: THREE.DoubleSide, fog: false  }), 	//back side
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load( "textures/cloudsRed.png" ), side: THREE.DoubleSide, fog: false  }), 		//up side
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load( "textures/cloudsRed.png" ), side: THREE.DoubleSide, fog: false  }), 	//down side
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load( "textures/cloudsRed.png" ), side: THREE.DoubleSide, fog: false  }),	//right side
+    new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load( "textures/cloudsRed.png" ), side: THREE.DoubleSide, fog: false  }) 		//left side
+];
+
+var skyCubeMaterial = new THREE.MeshFaceMaterial( skyCubeMaterials );
+var skyBox = new THREE.Mesh( skyGeometry, skyCubeMaterial );
+scene.add( skyBox );
+
+
+
+//************************* ADD SOUNDTRACK ************************************
+
+
+
+var bgSoundtrackListener = new THREE.AudioListener();
+camera.add(bgSoundtrackListener);
+
+var bgSoundtrack = new THREE.Audio(bgSoundtrackListener);
+
+var bgSoundtrackLoader = new THREE.AudioLoader();
+bgSoundtrackLoader.load('audio/myGeneration.mp3', function( buffer ) {
+	bgSoundtrack.setBuffer(buffer);
+	// loop the music
+	bgSoundtrack.setLoop(true);
+	bgSoundtrack.setVolume(0.15);
+	bgSoundtrack.play();
+});
+
+
+
+//************************* SPATIAL SOUND ************************************
+
+
+
+// set up a position for the audio (spinning motorbike)
+var revTarget = new THREE.Object3D();
+revTarget.position.set(0, 1, 0); 
+scene.add(revTarget);
+
+
+// adds listner for sound
+var revListner = new THREE.AudioListener();
+camera.add(revListner);
+
+// create position object
+var revObject = new THREE.PositionalAudio(revListner);
+
+// load revving.wav sound and place it in the buffer
+var revLoader = new THREE.AudioLoader();
+revLoader.load( 'audio/revving.wav', function( buffer ) {
+	revObject.setBuffer(buffer);
+	revObject.setRefDistance(20);
+	revObject.setLoop(true);
+	revObject.play();
+});
+
+revTarget.add(revObject);
+
+
+
+//************************* ADD THE CAMERA CONTROLS ************************************
+
+
+
+var camControls = new THREE.OrbitControls( camera );
+camera.position.set( 0, 20, 100 );
+camControls.update();
+
+
+
+//************************* ANIMATE **********************************************
+
+
+
+var animate = function () {
+	requestAnimationFrame( animate );
+	camControls.update();
+	renderer.render( scene, camera );
+
+	// move motorbike
+	bikeLoader.position.x -= 5;
+	bikeLoader.position.z -= 5;
+
+	// make middle motorbike spin
+	bikeLoader2.rotation.y -= (Math.PI / 2) / 5;
+	
+	// move scooter
+	scootLoader.position.x -= 0.25;
+	scootLoader.position.z += 5;
+
+	// set light to follow scooter
+	scootLight.position.x -= 0.25;
+	scootLight.position.z += 5;
+	
+	// set light direction to follow scooter
+	scootLight.target.position.x -= 0.25;
+	scootLight.target.position.z += 5;
+	
+	// change light intensity and position over time
+	light1.intensity += 0.005;
+	light1.position.x += 1;
+	
+	// add user controls for light manipulation
+	lightGUI.intensity = gui.Brightness;
+	lightGUI.visible = gui.Toggle;
+	lightGUI.position.x = gui.Position;
+	
+	
+	// move the spotlight
+	lightMove.position.x += 1;
+	lightMove.position.z += 1;									
+	
+	// move the spotlight target
+ 	lightMove.target.position.x += 1;
+ 	lightMove.target.position.z += 1;
+ 	
+ 	
+ 	// change spotlight colour to green firstly, half the intensity
+ 	if (increment == 5) {
+		lightMove.color.setHex( 0x77FF77 );
+		lightMove.intensity = 1;
+		console.log("Spotlight colour changed to green."); 
+		console.log("Spotlight intensity halved.");
+	}
+	
+	// change spotlight colour to blue secondly, half the intensity again
+	if (increment == 10) {
+		lightMove.color.setHex( 0x7777FF );
+		lightMove.intensity = 0.5;
+		console.log("Spotlight colour changed to blue."); 
+		console.log("Spotlight intensity halved again.");
+	}
+
+	// turn spotlight off
+ 	if (increment == 15) {
+		lightMove.intensity = 0;
+		console.log("Spotlight off."); 
+	}
+ 	
+ 	increment = increment + 1;
+};
+ 
+animate();
+
+
+</script>
+
+
+
+
+<div id="container">
+	<canvas id="canvas"></canvas>
+	<div id="overlay">
+		<!-- add heads up display speedometer -->
+		<video id="player" src="video/Speedometer.mp4" autoplay loop muted width=300px></video>
+
+	</div>
+</div>
+
+
+
+
+</body>
+</html>
