@@ -4,7 +4,7 @@ This project aimed to use as much capabilities of the Three.js library as possib
 
 ### Description
 
-This project uses the WebGL renderer and the Three.js library to create an immersive tour of UCC’s quad, through the lens of a hellish version of 1979’s Quadrophenia movie.
+This project uses the WebGL renderer and the Three.js library to create an immersive tour of a famous Irish quadrangle, through the lens of a hellish version of 1979’s Quadrophenia movie.
 
 For image textures I textured a projection of a movie on a large billboard behind the quad, I also textured a large cube to the left of the quad. For normal mapping I used an image of a stone ground texture, along with it’s normal map, to give the impression of depth. For environment mapping I created a ‘sky box’ cube large enough to surround the whole scene, this was textured with an image of red clouds.
 
