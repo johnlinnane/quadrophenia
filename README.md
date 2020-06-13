@@ -12,8 +12,6 @@ I loaded various external objects into the scene using a combination of GLTFLoad
 
 I used a vertex shader and a combination of three different fragment shaders to make the three bollards along the front of the quad.
 
-For a soundtrack, the song My Generation is played automatically when the scene is loaded.
-
 I used a combination light types in my scene, including Ambient and Spotlight. The spotlight in the foreground has animated movement, intensity, colour changes and eventually switches off.  The system changes resulting from the light change events are printed to the console. Another light follows the moving scooter as it comes around the right side of the quad.
 
 I used the WebGL renderer to enable headset capabilities. Line 176 of the html file should be uncommented to enable this feature.
