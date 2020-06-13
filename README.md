@@ -1,6 +1,6 @@
 # Quadrophenia (Three.js project)
 
-This project aimed to use as much capabilities of the Three.js library as possible (spatial sound, shaders, user triggered events, mapping, texture, materials).
+This project aimed to use as much capabilities of the Three.js library as possible (Head Mounted Display, spatial sound, shaders, user triggered events, mapping, texture, materials).
 
 ### Description
 
